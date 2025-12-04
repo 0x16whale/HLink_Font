@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkhlink=self.webpackChunkhlink||[]).push([[2436],{55:(n,l,s)=>{s.r(l),s.d(l,{cursorSvg:()=>h});var e,r=s(95708);const h=(0,s(62809).JW)(e||(e=(0,r.A)([' <svg fill="none" viewBox="0 0 13 4">\n  <path fill="currentColor" d="M.5 0h12L8.9 3.13a3.76 3.76 0 0 1-4.8 0L.5 0Z" />\n</svg>'])))}}]);
+//# sourceMappingURL=2436.db08f0b5.chunk.js.map

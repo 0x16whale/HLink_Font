@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkhlink=self.webpackChunkhlink||[]).push([[8340],{28340:(l,n,a)=>{a.r(n),a.d(n,{allWalletsSvg:()=>c});var e,s=a(95708);const c=(0,a(62809).JW)(e||(e=(0,s.A)(['<svg fill="none" viewBox="0 0 24 24">\n  <path\n    style="fill: var(--wui-color-accent-100);"\n    d="M10.2 6.6a3.6 3.6 0 1 1-7.2 0 3.6 3.6 0 0 1 7.2 0ZM21 6.6a3.6 3.6 0 1 1-7.2 0 3.6 3.6 0 0 1 7.2 0ZM10.2 17.4a3.6 3.6 0 1 1-7.2 0 3.6 3.6 0 0 1 7.2 0ZM21 17.4a3.6 3.6 0 1 1-7.2 0 3.6 3.6 0 0 1 7.2 0Z"\n  />\n</svg>'])))}}]);
+//# sourceMappingURL=8340.fd07197f.chunk.js.map
