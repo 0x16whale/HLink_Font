@@ -6,7 +6,7 @@ import reportWebVitals from './reportWebVitals';
 
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
-import { okxWallet } from '@rainbow-me/rainbowkit/wallets'
+import { zerionWallet, okxWallet, binanceWallet, rabbyWallet, safeWallet } from '@rainbow-me/rainbowkit/wallets'
 import { bsc } from 'wagmi/chains'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 
@@ -19,7 +19,7 @@ const config = getDefaultConfig({
   wallets: [
     {
       groupName: 'Preferred',
-      wallets: [okxWallet],
+      wallets: [zerionWallet, okxWallet, binanceWallet, rabbyWallet, safeWallet],
     },
   ],
   ssr: false, // true if your dapp uses server-side rendering.
@@ -31,7 +31,7 @@ root.render(
   <React.StrictMode>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitProvider coolMode={true}>
           <App />
         </RainbowKitProvider>
       </QueryClientProvider>

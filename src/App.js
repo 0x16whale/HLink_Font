@@ -8,7 +8,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 const CONTRACT_ADDRESS = "0x45532Daa1106B82259cE95321CDaF2b54757cc98";
 const BSC_MAINNET_RPC = "https://bsc-rpc.publicnode.com";
 
-const cuurent_projectId = process.env.REACT_APP_WALLET_CONNECT_PROJECT_ID;
+const current_projectId = process.env.REACT_APP_WALLET_CONNECT_PROJECT_ID;
 
 function HLinkApp() {
   const [blockNumber, setBlockNumber] = useState(null);
@@ -31,6 +31,7 @@ function HLinkApp() {
   const [queryUserAddress, setQueryUserAddress] = useState('');
   const [userInfo, setUserInfo] = useState(null);
   const [userReleaseAmount, setUserReleaseAmount] = useState(null);
+  const [getCurrentUserClaimAmount, setCurrentUserReleaseAmount] = useState(null);
 
   useEffect(() => {
     const fetchBlockNumber = async () => {
@@ -79,6 +80,7 @@ function HLinkApp() {
   useEffect(() => {
     fetchTotalSupply();
     fetchLockState();
+    handleGetCurrentReleaseAmount();
   }, [fetchTotalSupply, fetchLockState]);
 
   const showMessage = (message, isError = false) => {
@@ -136,13 +138,17 @@ function HLinkApp() {
       const { signer } = connection;
       const contract = new ethers.Contract(CONTRACT_ADDRESS, HLinkABI.abi, signer);
       const amount = ethers.parseEther(mintAmount);
-      const tx = await contract.mint(mintReceiver, amount);
+      const mint = await contract.mint(mintReceiver, amount);
       showMessage('Transaction submitted, waiting for confirmation...');
-      await tx.wait();
-      showMessage('Mint successful!');
-      setMintReceiver('');
-      setMintAmount('');
-      fetchTotalSupply();
+      const mintTx = await mint.wait();
+      if(mintTx.status === 1) {
+        showMessage('Mint successful🎉!');
+        setMintReceiver('');
+        setMintAmount('');
+        fetchTotalSupply();
+      }else {
+        showMessage('Mint fail😥!');
+      }
     } catch (err) {
       console.error('Mint failed:', err);
       showMessage('Mint failed: ' + (err.reason || err.message), true);
@@ -159,11 +165,15 @@ function HLinkApp() {
       
       const { signer } = connection;
       const contract = new ethers.Contract(CONTRACT_ADDRESS, HLinkABI.abi, signer);
-      const tx = await contract.setLock(globalLockState);
+      const setLock = await contract.setLock(globalLockState);
       showMessage('Transaction submitted, waiting for confirmation...');
-      await tx.wait();
-      showMessage('Global lock set successfully!');
-      fetchLockState();
+      const setLockTx = await setLock.wait();
+      if(setLockTx.status === 1) {
+        showMessage('Global lock set successfully🎉!');
+        fetchLockState();
+      }else {
+        showMessage('Global lock set fail😥!');
+      }
     } catch (err) {
       console.error('Failed to set global lock:', err);
       showMessage('Failed to set global lock: ' + (err.reason || err.message), true);
@@ -188,11 +198,15 @@ function HLinkApp() {
       console.log("userLockAddress:", userLockAddress);
       console.log("userLockState:", userLockState);
 
-      const tx = await contract.setUserLock(userLockAddress, userLockState);
+      const setUserLock = await contract.setUserLock(userLockAddress, userLockState);
       showMessage('Transaction submitted, waiting for confirmation...');
-      await tx.wait();
-      showMessage('User lock set successfully!');
-      setUserLockAddress('');
+      const setUserLockTx = await setUserLock.wait();
+      if(setUserLockTx.status === 1) {
+        showMessage('User lock set successfully🎉!');
+        setUserLockAddress('');
+      }else {
+        showMessage('User lock set fail😥!');
+      }
     } catch (err) {
       console.error('Failed to set user lock:', err);
       showMessage('Failed to set user lock: ' + (err.reason || err.message), true);
@@ -217,20 +231,23 @@ function HLinkApp() {
       
       let paramsGroup = [{
         thisLockType: Number(lockType), 
-        period: Number(period) || 0, 
+        period: Number(period), 
         mintAmount: ethers.parseEther(mintAmountBatch),
         user: userAddress
       }];
 
-      const tx = await contract.batchSetUser(paramsGroup);
+      const handleBatchSetUser = await contract.batchSetUser(paramsGroup);
       showMessage('Transaction submitted, waiting for confirmation...');
-      await tx.wait();
-      showMessage('User set successfully!');
-      
-      setLockType(1);
-      setPeriod('');
-      setMintAmountBatch('');
-      setUserAddress('');
+      const handleBatchSetUserTx = await handleBatchSetUser.wait();
+      if(handleBatchSetUserTx.status === 1) {
+        showMessage('User set successfully🎉!');
+        setLockType(1);
+        setPeriod('');
+        setMintAmountBatch('');
+        setUserAddress('');
+      }else{
+        showMessage('User set fail😥!');
+      }
     } catch (err) {
       console.error('Failed to batch set user:', err);
       showMessage('Failed to set user: ' + (err.reason || err.message), true);
@@ -251,8 +268,7 @@ function HLinkApp() {
       if (!contract) return;
       
       const info = await contract.getUserInfo(queryUserAddress);
-      const lockTypeMap = { 0: 'Suspend', 1: 'Linear' };
-      const lockTypeText = info.lockType === 0 ? 'Suspend' : 'Linear'; 
+      const lockTypeText = info.lockType === 0 ? 'Fixed' : 'Linear'; 
       
       setUserInfo({
         whitelist: info.whitelist,
@@ -298,6 +314,24 @@ function HLinkApp() {
     }
   };
 
+  const handleGetCurrentReleaseAmount = async () =>  {
+    try{
+      setLoading(true);
+      const connection = await getProviderAndSigner();
+      if (!connection) return;
+      const { signer } = connection;
+      const currentAddress = await signer.getAddress();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, HLinkABI.abi, signer);
+      const amount = await contract.getUserReleaseAmount(currentAddress);
+      console.log("amount:", amount);
+      setCurrentUserReleaseAmount(ethers.formatEther(amount));
+    }catch(err) {
+      console.error('Failed to get current user release amount:', err);
+      showMessage('Failed to get current user release amount: ' + err.message, true);
+      setCurrentUserReleaseAmount(null);
+    }
+  }
+
   const handleRelease = async () => {
     try {
       setLoading(true);
@@ -306,10 +340,14 @@ function HLinkApp() {
       
       const { signer } = connection;
       const contract = new ethers.Contract(CONTRACT_ADDRESS, HLinkABI.abi, signer);
-      const tx = await contract.release();
+      const release = await contract.release();
       showMessage('Transaction submitted, waiting for confirmation...');
-      await tx.wait();
-      showMessage('Release successful!');
+      const releaseTx = await release.wait();
+      if(releaseTx.status === 1) {
+        showMessage('Release successful🎉!');
+      }else {
+        console.log("Release error😥!");
+      }
     } catch (err) {
       console.error('Release failed:', err);
       showMessage('Release failed: ' + (err.reason || err.message), true);
@@ -439,7 +477,7 @@ function HLinkApp() {
                 onChange={(e) => setLockType(Number(e.target.value))}
                 className="form-select"
               >
-                <option value={0}>0 = Suspend</option>
+                <option value={0}>0 = Fixed</option>
                 <option value={1}>1 = Linear</option>
               </select>
             </div>
@@ -495,6 +533,12 @@ function HLinkApp() {
                 {loading ? 'Querying...' : 'Query Release Amount'}
               </button>
             </div>
+            {getCurrentUserClaimAmount !== null && (
+              <div className="user-info-display">
+                <h4>Release Amount:</h4>
+                <p>{parseFloat(getCurrentUserClaimAmount).toLocaleString()} HLINK</p>
+              </div>
+            )}
             {userInfo && (
               <div className="user-info-display">
                 <h4>User Information:</h4>
@@ -509,15 +553,16 @@ function HLinkApp() {
                 </ul>
               </div>
             )}
-            {userReleaseAmount !== null && (
+          </div>
+
+          <div className="function-card">
+          {userReleaseAmount !== null && (
               <div className="user-info-display">
                 <h4>Release Amount:</h4>
                 <p>{parseFloat(userReleaseAmount).toLocaleString()} HLINK</p>
               </div>
             )}
-          </div>
-
-          <div className="function-card">
+            
             <h3>Release Tokens</h3>
             <p>Release linear release tokens for your current account</p>
             <button onClick={handleRelease} className="btn btn-primary" disabled={loading}>
